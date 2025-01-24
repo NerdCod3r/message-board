@@ -8,7 +8,12 @@ const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
 const runner            = require('./test-runner');
 
+const helmet = require('helmet');
+const mongoose = require('mongoose');
+
 const app = express();
+
+app.use(helmet());
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
@@ -16,6 +21,16 @@ app.use(cors({origin: '*'})); //For FCC testing purposes only
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Connect to the database
+const uri = process.env.DB_URI;
+mongoose.connect(uri)
+.then(()=>{
+  console.log(`Connected to MongoDB via Mongoose`);
+})
+.catch((err)=>{
+    console.error(`Database connection error: ${err}`);
+});
 
 //Sample front-end
 app.route('/b/:board/')

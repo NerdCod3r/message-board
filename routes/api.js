@@ -1,9 +1,64 @@
 'use strict';
+const Thread = require('../models/Thread');
 
 module.exports = function (app) {
-  
-  app.route('/api/threads/:board');
-    
-  app.route('/api/replies/:board');
+  /**
+   * This function is used for creating a board for a thread from the form
+   * in the front end
+   * eg: Flickr
+   * Text = Lily of the vine, the unusual species
+   * Password = 1234567890
+   */
+  app.route('/api/threads/:board')
+  .post(async (req, res)=>{
+    const { board } = req.params;
+    const { text, delete_password } = req.body;
+    console.log(`Creating a thread board.`);
+    try{
+      const newThread = new Thread({ board, text, delete_password });
+      const savedThread = await newThread.save();
+      res.json({ success: true, thread: savedThread });
+
+    } catch (err) {
+      res.status(500).json({error: 'Unable to create thread'})
+    }
+  });
+   
+  /**
+   * This function will handle a reply to threads' board
+   */
+
+  app.route('/api/replies/:board')
+  .post(async (request, response)=>{
+
+    const { board } = req.params;
+    const { thread_id, text, delete_password } = req.body;
+
+    if (!thread_id || !text || !delete_password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try{
+      const thread = await Thread.findOne({ _id: thread_id, board });
+
+      if (!thread) {
+      return res.status(404).json({ error: 'Thread not found' });
+      }
+
+      const newReply = {
+        text,
+        delete_password,
+      };
+
+      thread.replies.push(newReply);
+      thread.bumped_on = new Date(); 
+      await thread.save();
+
+      res.json({ success: true, thread });
+    } catch(err){
+      console.error(err);
+      response.status(500).json({error: 'Unable to add reply'});
+    }
+  });
 
 };
