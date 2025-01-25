@@ -108,7 +108,6 @@ module.exports = function (app) {
     // Update threads
     threads[ind] = curr_thread;
   }
-    console.log('Finished updating threads things.');
     res.json(threads);
   } catch (err) {
     res.status(500).json({ error: 'Unable to fetch threads' , err});
@@ -131,12 +130,22 @@ module.exports = function (app) {
     }
   
     try {
-      const thread = await Thread.findOne({ _id: thread_id, board }).select('-delete_password -reported');
+      var thread = await Thread.findOne({ _id: thread_id, board }).select('-delete_password -reported');
   
       if (!thread) {
         return res.status(404).json({ error: 'Thread not found' });
       }
-  
+
+      // Make certain changes to the returned thread's replies
+      for (let ind = 0; ind < thread.replies.length; ind++ ) {
+        const curr_rep = {...thread.replies[ind]};
+        delete curr_rep.delete_password;
+        delete curr_rep.reported;
+
+        // Update the replies array of a thread.
+        thread.replies[ind] = curr_rep;
+      }
+      
       res.json(thread);
     } catch (err) {
       console.error(err);
