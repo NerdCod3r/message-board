@@ -71,14 +71,47 @@ module.exports = function (app) {
     const { board } = req.params;
 
   try {
-    const threads = await Thread.find({ board })
+    var threads = await Thread.find({ board })
       .sort({ bumped_on: -1 })
       .limit(10)
       .select('-delete_password -reported')
       .lean();
+  console.log('Threads are received: ', threads);
+    // Slice the replies for the 3 most recent replies to 
+    // a particular thread.
+    for ( let ind = 0; ind < threads.length; ind++ ) {
+      var curr_thread = threads[ind];
+      if (curr_thread.replies.length >= 3 ) {
+        curr_thread.replies = curr_thread.replies.slice(-3, -1);
+
+        // Filter properties
+        // Do not show 'reported' and 'deleted_password'
+        for ( let reply_ind = 0; reply_ind < curr_thread.replies.length; reply_ind++ ) {
+          var curr_reply = curr_thread.replies[reply_ind];
+          delete curr_reply.reported;
+          delete curr_reply.delete_password;
+          // update the replies
+          curr_thread.replies[reply_ind] = curr_reply;
+      }
+    }
+    else {
+            // Filter properties
+          // Do not show 'reported' and 'deleted_password'
+          for ( let reply_ind = 0; reply_ind < curr_thread.replies.length; reply_ind++ ) {
+            var curr_reply = curr_thread.replies[reply_ind];
+            delete curr_reply.reported;
+            delete curr_reply.delete_password;
+            // update the replies
+            curr_thread.replies[reply_ind] = curr_reply;
+        }
+    }
+    // Update threads
+    threads[ind] = curr_thread;
+  }
+    console.log('Finished updating threads things.');
     res.json(threads);
   } catch (err) {
-    res.status(500).json({ error: 'Unable to fetch threads' });
+    res.status(500).json({ error: 'Unable to fetch threads' , err});
   }
   });
 
