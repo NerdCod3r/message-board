@@ -4,8 +4,7 @@
 	"description": "InfoSec project for freeCodeCamp",
 	"main": "server.js",
 	"scripts": {
-		"start": "node --watch server.js",
-		"test": ""
+		"start": "node --watch server.js"
 	},
 	"dependencies": {
 		"body-parser": "^1.20.3",
@@ -29,5 +28,19 @@
 		"chai": "^5.1.2",
 		"chai-http": "^5.1.1",
 		"mocha": "^11.1.0"
-	}
+	},
+	"addedBoard":{
+		"success": true,
+		"thread": {
+		  "board": "Flickr",
+		  "text": "Hello Flickr!",
+		  "delete_password": "1234567890",
+		  "reported": false,
+		  "_id": "6794165a6f229ebf095d487a",
+		  "created_on": "2025-01-24T22:38:18.225Z",
+		  "bumped_on": "2025-01-24T22:38:18.226Z",
+		  "replies": [],
+		  "__v": 0
+		}
+	  }
 }
