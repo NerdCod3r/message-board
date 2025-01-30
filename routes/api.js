@@ -1,5 +1,7 @@
 'use strict';
 const Thread = require('../models/Thread');
+const bcrypt = require('bcrypt');
+
 
 module.exports = function (app) {
   /**
@@ -15,7 +17,8 @@ module.exports = function (app) {
     const { text, delete_password } = req.body;
     console.log(`Creating a thread board.`);
     try{
-      const newThread = new Thread({ board, text, delete_password });
+      const hashedPassword = await bcrypt.hash(delete_password, 10);
+      const newThread = new Thread({ board, text, delete_password:hashedPassword });
       const savedThread = await newThread.save();
       res.json({ success: true, thread: savedThread });
 
@@ -25,7 +28,7 @@ module.exports = function (app) {
   });
    
   /**
-   * This function will handle a reply to threads' board sent
+   * This function will save a reply to threads' board sent
    * using the POST method.
    */
 
@@ -45,10 +48,11 @@ module.exports = function (app) {
       if (!thread) {
       return response.status(404).json({ error: 'Thread not found' });
       }
+      const hashedPassword = await bcrypt.hash(delete_password, 10);
 
       const newReply = {
         text,
-        delete_password,
+        delete_password: hashedPassword,
       };
 
       thread.replies.push(newReply);
@@ -161,6 +165,7 @@ module.exports = function (app) {
   .delete(async function(req, res){
     const { board } = req.params;
     const { thread_id, delete_password } = req.body;
+    
 
     console.log('thread_id ', thread_id);
     console.log('delete_password ', delete_password);
@@ -172,16 +177,15 @@ module.exports = function (app) {
     try {
       console.log('Inside try-catch block');
       const thread = await Thread.findOne({ _id: thread_id, board });
-      console.log(thread);
       if (!thread) {
        res.send('Thread not found');
       }
-  
-      if (thread.delete_password !== delete_password) {
+      const match = await bcrypt.compare(delete_password, thread.delete_password);
+      if (!match) {
        res.send('Incorrect password');
       }
 
-      if (thread.delete_password === delete_password) {
+      if (match) {
         await thread.deleteOne();
         res.send('success');
       }
@@ -216,8 +220,8 @@ module.exports = function (app) {
       if (!reply) {
         res.send('Reply not found');
       }
-  
-      if (reply.delete_password !== delete_password) {
+      const password_match = await bcrypt.compare(delete_password, reply.delete_password);
+      if ( !password_match ) {
         res.send('Incorrect delete password');
       }
   
